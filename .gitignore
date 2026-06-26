@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+data/raw/
+data/shapefiles/
+*.shp
+*.dbf
+*.shx
+*.prj
+*.cpg
+*.parquet
+.env
+.DS_Store

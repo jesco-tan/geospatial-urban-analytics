@@ -1,0 +1,46 @@
+geography:
+  state_fips: "06"              # California (FIPS 06)
+  census_year: 2022
+  geometry_level: "tract"
+  projection_epsg: 3310         # California Albers (metres)
+
+acs_variables:
+  median_household_income: "B19013_001E"
+  broadband_subscriptions: "B28002_004E"
+  total_households_internet: "B28002_001E"
+  population: "B01003_001E"
+  bach_degree_plus: "B15003_022E"
+  total_pop_25plus: "B15003_001E"
+
+spatial:
+  queen_contiguity: true
+  n_permutations: 999
+  lisa_significance: 0.05
+
+regression:
+  min_population: 500
+  dependent_variable: "broadband_rate"
+  covariates:
+    - "log_income"
+    - "bach_rate"
+    - "log_population"
+
+scenario:
+  # BEAD broadband subsidy targeting, California 2022
+  # Policy question: which census tracts should receive federal BEAD infrastructure
+  # grants first? Spatial clustering (LL cold spots) signals market failure;
+  # income-driven gaps signal affordability. The two do not perfectly overlap.
+  name: "California BEAD Broadband Subsidy Targeting"
+  broadband_threshold: 0.65     # tracts below this are "underserved"
+  edi_weights:                   # Economic Disadvantage Index weights
+    income: 0.40
+    education: 0.30
+    broadband: 0.30
+  n_tracts_synthetic: 400
+  synthetic_seed: 42
+
+  # Subgroup labels
+  county_types:
+    - urban
+    - suburban
+    - rural

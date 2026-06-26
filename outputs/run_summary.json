@@ -1,0 +1,176 @@
+{
+  "scenario": "California BEAD Broadband Subsidy Targeting",
+  "n_tracts": 400,
+  "data_source": "synthetic (structured latent model)",
+  "broadband_threshold": 0.65,
+  "exploratory": {
+    "r_income_broadband": 0.7134,
+    "r_education_broadband": 0.5712,
+    "underserved_tracts": 258,
+    "underserved_pct": 64.5,
+    "broadband_by_county_type": {
+      "rural": 0.274,
+      "suburban": 0.598,
+      "urban": 0.801
+    }
+  },
+  "global_moran": {
+    "moran_i": 0.913804,
+    "expected_i": -0.002506,
+    "variance": 0.00130063,
+    "z_score": 25.4078,
+    "p_value_norm": 0.0,
+    "p_value_sim": 0.001,
+    "n_permutations": 999
+  },
+  "subgroup_moran": [
+    {
+      "group": "rural",
+      "n": 161,
+      "moran_i": 0.916006,
+      "p_value_sim": 0.001
+    },
+    {
+      "group": "suburban",
+      "n": 107,
+      "moran_i": 0.59155,
+      "p_value_sim": 0.001
+    },
+    {
+      "group": "urban",
+      "n": 132,
+      "moran_i": 0.325309,
+      "p_value_sim": 0.001
+    }
+  ],
+  "lisa_cluster_counts": {
+    "NS": 191,
+    "LL": 113,
+    "HH": 92,
+    "LH": 4
+  },
+  "lisa_by_county_type": {
+    "HH": {
+      "rural": 0,
+      "suburban": 2,
+      "urban": 90
+    },
+    "LH": {
+      "rural": 0,
+      "suburban": 0,
+      "urban": 4
+    },
+    "LL": {
+      "rural": 113,
+      "suburban": 0,
+      "urban": 0
+    },
+    "NS": {
+      "rural": 48,
+      "suburban": 105,
+      "urban": 38
+    }
+  },
+  "edi_by_cluster": {
+    "HH": 0.3847,
+    "LH": 0.5134,
+    "LL": 0.8396,
+    "NS": 0.5834
+  },
+  "edi_by_county_type": {
+    "rural": 0.8179,
+    "suburban": 0.5736,
+    "urban": 0.4085
+  },
+  "ols_full": {
+    "method": "OLS",
+    "n": 400,
+    "r_squared": 0.7549,
+    "adj_r_squared": 0.753,
+    "aic": -591.9
+  },
+  "ols_coefficients": {
+    "const": {
+      "coef": -2.808685,
+      "p_value": 0.0
+    },
+    "log_income": {
+      "coef": 0.207948,
+      "p_value": 0.0
+    },
+    "bach_rate": {
+      "coef": 0.20522,
+      "p_value": 0.0
+    },
+    "log_population": {
+      "coef": 0.128877,
+      "p_value": 0.0
+    }
+  },
+  "spatial_lag": {
+    "method": "SpatialLag",
+    "n": 400,
+    "r_squared": 0.9106,
+    "aic": -922.24,
+    "rho": 0.677804
+  },
+  "spatial_error": {
+    "method": "SpatialError",
+    "n": 400,
+    "r_squared": 0.7122,
+    "aic": -796.84,
+    "lambda": 0.851843
+  },
+  "subgroup_ols_r2": {
+    "rural": 0.429,
+    "suburban": 0.3013,
+    "urban": 0.3226
+  },
+  "subgroup_ols_income_coef": {
+    "rural": {
+      "coef": 0.05867,
+      "p_value": 0.00226
+    },
+    "suburban": {
+      "coef": 0.06043,
+      "p_value": 8e-05
+    },
+    "urban": {
+      "coef": 0.20642,
+      "p_value": 0.0
+    }
+  },
+  "guardrail": {
+    "broadband_threshold": 0.65,
+    "total_underserved_tracts": 258,
+    "total_underserved_hh": 521152,
+    "ll_cluster_tracts": 113,
+    "ll_underserved_hh": 119165,
+    "ll_coverage_pct": 22.9,
+    "missed_hh": 401987,
+    "missed_pct": 77.1,
+    "coverage_by_type": {
+      "rural": {
+        "underserved_tracts": 161,
+        "underserved_hh": 218620,
+        "ll_tracts": 113,
+        "ll_hh": 119165,
+        "ll_coverage_pct": 54.5
+      },
+      "suburban": {
+        "underserved_tracts": 82,
+        "underserved_hh": 234282,
+        "ll_tracts": 0,
+        "ll_hh": 0,
+        "ll_coverage_pct": 0.0
+      },
+      "urban": {
+        "underserved_tracts": 15,
+        "underserved_hh": 68250,
+        "ll_tracts": 0,
+        "ll_hh": 0,
+        "ll_coverage_pct": 0.0
+      }
+    }
+  }
+}

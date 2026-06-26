@@ -1,0 +1,176 @@
+---
+title: "Where is the broadband gap? Spatial clustering, market failure, and subsidy targeting"
+publishedAt: "2026-06-24"
+summary: "Full spatial analysis pipeline for California BEAD broadband subsidy targeting: Moran's I = 0.914, Spatial Lag R² = 0.911 (ρ = 0.678), 113 rural LL cold spots, guardrail showing 77.1% of underserved households missed by spatial-only targeting."
+shortsummary: "Spatial autocorrelation, LISA cold spots, and spatial regression expose a guardrail breach: LL-cluster targeting misses 77.1% of underserved households."
+images:
+  - "/images/projects/geospatial-urban-analytics/lisa_cluster_map.png"
+team:
+  - name: "Jesco Tan"
+    role: "Author"
+    avatar: "/images/avatar.jpg"
+    linkedIn: "https://www.linkedin.com/in/jesco-tan/"
+link: "https://github.com/jesco-tan/geospatial-urban-analytics"
+---
+
+## Why this line of work
+
+I'm interested in problems where the right question to ask isn't "what is the average effect?" but "where does the effect concentrate, and why?" Broadband access is one of those problems. It's often framed as an income question, poor households can't afford subscriptions, but the spatial literature suggests a second mechanism: **geographic market failure**, where providers don't extend infrastructure into areas where adjacent adoption is already low. The two mechanisms call for completely different policy instruments. Infrastructure grants fix market failure; affordability vouchers fix the income constraint. Conflating them wastes money.
+
+I wanted to build a portfolio piece that does what good policy analysis does: identify the correct mechanism, model it rigorously, and then test whether the mechanistically correct targeting rule actually reaches the people it's supposed to serve. The guardrail analysis at the end of this project is the most important part, and it overturns the simple answer.
+
+---
+
+## 1. Spatial autocorrelation, is the broadband gap geographic?
+
+**Why I built it.** Before running any regression or designing any policy, you need to know whether geography is doing structural work in the outcome variable. If broadband rates were randomly distributed across space, place-based programmes would be wasteful, you could just target households by income. Global Moran's I answers whether that's true.
+
+**What it is, in one breath.** `spatial_stats.global_morans_i()` computes the standard Moran statistic against a Queen-contiguity, row-standardised weights matrix and runs 999 permutation reshufflings to generate a pseudo p-value that does not assume normality. The result is both a point estimate and a simulation-validated significance test.
+
+**Where the details live.** `src/geo_urban/spatial_stats.py:global_morans_i()`, notebook Section 4, `outputs/moran_scatter.png`.
+
+<figure style={{ margin: "2rem 0", textAlign: "center" }}>
+  <Media
+    src="/images/projects/geospatial-urban-analytics/moran_scatter.png"
+    alt="Moran scatter plot showing Moran's I = 0.914 with steep positive slope and LISA-coloured points"
+    sizes="(max-width: 960px) 100vw, 960px"
+    enlarge
+    radius="m"
+    style={{ width: "100%", margin: "0 auto" }}
+  />
+  <figcaption style={{ fontSize: "1rem", color: "#888", marginTop: "0.5rem", textAlign: "center" }}>
+    Moran scatter plot: standardised broadband rate vs spatial lag of broadband rate. The slope equals Moran's I = 0.914. Points are coloured by their LISA quadrant (blue = LL cold spots). The steep gradient and tight scatter confirm that a tract's broadband rate is almost entirely predictable from its neighbours, geographic structure dominates individual-level variation.
+  </figcaption>
+</figure>
+
+### Insights from the pipeline
+
+- **I = 0.914 is extreme, not typical.** California ACS data typically yields Moran's I around 0.45–0.55 for broadband. The synthetic generator plants strong spatial structure to stress-test the pipeline and produce clearly readable LISA maps; real data would be noisier but the qualitative pattern holds.
+- **Subgroup Moran's I reveals the mechanism.** Rural I = 0.916, suburban I = 0.592, urban I = 0.325. The urban I is substantially lower not because urban broadband is uniform (it isn't, 15 suppressed tracts are well below 50%), but because urban low-broadband pockets are *scattered*, not contiguous. Spatial autocorrelation measures neighbourhood coherence, not aggregate access level.
+- **The permutation test matters more than the z-score.** The theoretical z-score assumes normality of the Moran statistic. With 400 tracts and a non-normal broadband distribution, the simulation-based p_sim = 0.001 is the number to report. Both tests agree here, but on real ACS data with skewed distributions they can diverge.
+
+### Why this pattern shows up in industry and in the world
+
+Spatial autocorrelation analysis is used wherever geographic clustering signals a mechanism rather than a coincidence. In **epidemiology**, disease cluster detection (SaTScan, LISA) identifies outbreak zones vs. random noise, the same logic as cold-spot detection here. In **real estate and insurance**, spatial autocorrelation in property values or claims identifies market segmentation and redlining. In **telecommunications**, provider coverage decisions are explicitly spatially dependent: it is cheaper to extend a cable head-end into an area adjacent to existing service than to build greenfield in an isolated pocket. That economic logic is why broadband clustering exists in the first place, and why detecting it matters for policy.
+
+---
+
+## 2. LISA clusters, which tracts form cold spots?
+
+**Why I built it.** Global Moran's I establishes that clustering exists. LISA (Local Indicators of Spatial Association) decomposes the global statistic to each observation, assigning a quadrant label: HH (both tract and neighbours high), LL (both low), HL/LH (spatial outliers), or NS (not significant). LL tracts are the direct answer to "where should we build infrastructure?", they are the places where low access reinforces itself across geographic space.
+
+**What it is, in one breath.** `lisa_clusters()` runs `esda.Moran_Local` with 999 permutations, maps quadrant integers to labels, masks non-significant results at p < 0.05, and attaches `lisa_cluster` and `lisa_p_sim` columns to the GeoDataFrame. The LISA map is saved both as a static PNG and as an interactive Folium HTML choropleth with tooltips.
+
+**Where the details live.** `src/geo_urban/spatial_stats.py:lisa_clusters()`, notebook Section 5, `outputs/lisa_cluster_map.png`, `outputs/choropleth_lisa.html`.
+
+<figure style={{ margin: "2rem 0", textAlign: "center" }}>
+  <Media
+    src="/images/projects/geospatial-urban-analytics/lisa_cluster_map.png"
+    alt="LISA cluster static map showing 113 blue LL cold-spot tracts (all rural) and 92 red HH hot-spot tracts (urban)"
+    sizes="(max-width: 960px) 100vw, 960px"
+    enlarge
+    radius="m"
+    style={{ width: "100%", margin: "0 auto" }}
+  />
+  <figcaption style={{ fontSize: "1rem", color: "#888", marginTop: "0.5rem", textAlign: "center" }}>
+    LISA cluster map: 113 cold spots (LL, blue) and 92 hot spots (HH, red). Every single LL cold-spot tract is rural; every HH tract is urban or suburban. No suburban or urban tracts qualify as LL clusters, the broadband gaps in those zones are scattered, not spatially coherent.
+  </figcaption>
+</figure>
+
+### Insights from the pipeline
+
+- **All 113 LL cold spots are rural.** This is the central empirical finding. Zero suburban or urban tracts form LL clusters. Urban low-broadband tracts exist (15 affordability-suppressed tracts), but they are surrounded by high-broadband neighbours, they appear as LH outliers or NS, not LL.
+- **Median EDI in LL tracts = 0.840 vs 0.385 in HH tracts.** The Economic Disadvantage Index (composite of income, education, and broadband deficits) is highest in cold spots. Infrastructure grants to LL tracts address multi-dimensional deprivation simultaneously, not just the broadband gap. This matters for prioritisation: a programme that maximises EDI coverage per dollar would target LL tracts.
+- **The NS category hides a policy problem.** 104 of 107 suburban tracts are NS, not because their broadband is high, but because their broadband *varies* within the suburban zone, creating a heterogeneous spatial signal. Suburban tracts below 65% broadband don't cluster enough to register, yet they contain 234,282 underserved households. The NS label is a methodological finding, not a policy clearance.
+
+### Why this pattern shows up in industry and in the world
+
+LISA cold-spot detection is standard in public health surveillance (identifying disease clusters), crime analysis (hot spot policing), environmental justice (clustering of pollution + poverty), and rural economic policy. The specific application to broadband access has direct policy precedent: the FCC's broadband maps and the NTIA's BEAD funding formula both use variants of cluster-based targeting to identify underserved areas. The gap this analysis identifies, that spatial clustering metrics miss affordability-driven urban underservice, is a known limitation in the regulatory literature; the FCC's most recent fabric maps attempt to address it by including household-level affordability indicators alongside spatial coverage maps.
+
+---
+
+## 3. Spatial regression, separating income from spillovers
+
+**Why I built it.** OLS tells you how much of the broadband-rate variance income and education explain. It doesn't tell you whether the residuals are spatially structured (which would mean OLS coefficients are biased), or whether the spatial pattern represents a direct spillover effect (neighbours' broadband raises yours) vs. an omitted spatial variable (unobserved geographic features cluster). The two spatial models, Spatial Lag and Spatial Error, distinguish those mechanisms.
+
+**What it is, in one breath.** `regression.py` wraps `statsmodels` OLS with HC3 standard errors and `spreg.ML_Lag` / `spreg.ML_Error` maximum likelihood estimation, then assembles a comparison DataFrame sorted by AIC. `run_subgroup_ols()` runs OLS separately for each county type, returning a long-format result ready for the forest-plot visualisation in `visualise.py`.
+
+**Where the details live.** `src/geo_urban/regression.py`, notebook Sections 7–8, `outputs/regression_comparison.png`, `outputs/subgroup_regression.png`.
+
+<figure style={{ margin: "2rem 0", textAlign: "center" }}>
+  <Media
+    src="/images/projects/geospatial-urban-analytics/regression_comparison.png"
+    alt="Bar charts comparing R-squared and AIC across OLS, Spatial Lag, and Spatial Error models"
+    sizes="(max-width: 960px) 100vw, 960px"
+    enlarge
+    radius="m"
+    style={{ width: "100%", margin: "0 auto" }}
+  />
+  <figcaption style={{ fontSize: "1rem", color: "#888", marginTop: "0.5rem", textAlign: "center" }}>
+    Model comparison: Spatial Lag achieves R² = 0.911 and AIC = −922, beating OLS (R² = 0.755, AIC = −592) by 330 AIC points. ρ = 0.678, a large and significant spatial spillover. The 330-point AIC gap is decisive: income and education are necessary but not sufficient to explain the broadband distribution.
+  </figcaption>
+</figure>
+
+<figure style={{ margin: "2rem 0", textAlign: "center" }}>
+  <Media
+    src="/images/projects/geospatial-urban-analytics/subgroup_regression.png"
+    alt="Forest plot of OLS R-squared and income coefficients by county type: rural, suburban, urban"
+    sizes="(max-width: 960px) 100vw, 960px"
+    enlarge
+    radius="m"
+    style={{ width: "100%", margin: "0 auto" }}
+  />
+  <figcaption style={{ fontSize: "1rem", color: "#888", marginTop: "0.5rem", textAlign: "center" }}>
+    Subgroup OLS: R² ranges from 0.301 (suburban) to 0.429 (rural). The income coefficient in urban areas (0.206) is 3.5× larger than in rural (0.059), confirming that urban broadband gaps are affordability-driven while rural broadband varies with income at a gentler slope but is more uniformly low.
+  </figcaption>
+</figure>
+
+### Insights from the pipeline
+
+- **ρ = 0.678 means spatial spillovers are large.** After controlling for income, education, and population, a one-unit increase in neighbours' mean broadband raises the tract's own broadband by 0.678 units. This is the economic signature of shared infrastructure economics: providers extend service into a cluster because the combined addressable market across adjacent tracts becomes viable. Subsidising one tract has measurable positive spillover effects on its neighbours.
+- **Urban income coefficient (0.206) is 3.5× rural (0.059).** In urban areas, raising household income by 1% raises broadband by 0.21 pp, income is the binding constraint for urban non-subscribers. In rural areas, the income coefficient is much smaller because the limiting factor is supply (infrastructure doesn't exist), not price (households can't afford it). The same policy, income subsidy, has 3.5× the expected broadband impact in urban areas vs. rural areas.
+- **Spatial Error's λ = 0.852 even beats Spatial Lag in raw λ magnitude.** This means unobserved spatial variables (terrain, provider service-area boundaries, regulatory zoning) also play a large role. Spatial Lag wins on AIC because the direct spillover is the stronger effect in this data, but Spatial Error's large λ is a reminder that the income + education controls leave significant omitted spatial structure unexplained.
+
+### Why this pattern shows up in industry and in the world
+
+Spatial econometrics with Moran tests and ML spatial models is standard in **urban economics** (housing markets, property value spillovers), **agricultural economics** (yield spillovers from irrigation and practice diffusion), **environmental economics** (pollution spillovers across jurisdictions), and **public economics** (fiscal spillovers between municipalities). The specific question of whether broadband clustering reflects direct spillovers or omitted geographic variables matters for cost-benefit analysis: ρ > 0 implies positive externalities, which is the textbook justification for a government subsidy, private providers underinvest because they can't capture the value they create in adjacent tracts.
+
+---
+
+## 4. Guardrail, does spatial targeting reach underserved people?
+
+**Why I built it.** This is the part most policy analyses skip. They stop at "LL clusters = subsidy target" without checking whether the LL-cluster population is a representative sample of all underserved people. If LL clusters are rural and sparse, and most underserved households are suburban and dense, the policy is correct at the mechanism level but wrong at the coverage level.
+
+**What it is, in one breath.** `regression.population_coverage_analysis()` computes the intersection of LISA LL cluster membership and broadband < threshold, breaks the result out by county type, and returns coverage rates and missed-household counts. `visualise.plot_guardrail()` produces a two-panel figure: scatter of underserved tracts by population vs. broadband rate (shape = LL or not, colour = county type), and a stacked bar showing household coverage by county type.
+
+**Where the details live.** `src/geo_urban/regression.py:population_coverage_analysis()`, notebook Section 9, `outputs/guardrail_analysis.png`.
+
+<figure style={{ margin: "2rem 0", textAlign: "center" }}>
+  <Media
+    src="/images/projects/geospatial-urban-analytics/guardrail_analysis.png"
+    alt="Left panel: scatter of underserved tracts by population and broadband rate, coloured by county type. Right panel: stacked bar of household coverage by county type showing suburban and urban at zero LL coverage."
+    sizes="(max-width: 960px) 100vw, 960px"
+    enlarge
+    radius="m"
+    style={{ width: "100%", margin: "0 auto" }}
+  />
+  <figcaption style={{ fontSize: "1rem", color: "#888", marginTop: "0.5rem", textAlign: "center" }}>
+    Guardrail analysis: LL targeting reaches 54.5% of rural underserved households but 0% of suburban (234,282 HH) and urban (68,250 HH) underserved. Total coverage: 22.9%. The 77.1% miss rate is the analytical tension that overturns the simple "fund LL clusters" rule.
+  </figcaption>
+</figure>
+
+### Insights from the pipeline
+
+- **77.1% of underserved households are missed by LL-cluster targeting.** Total underserved: 521,152 households. LL targeting reaches 119,165. The 401,987 missed live in suburban (234,282) and urban (68,250) tracts that don't form spatial clusters. This is not an edge case, it's the majority of the problem.
+- **Suburban underserved (234,282 HH) outnumber rural underserved (218,620 HH).** The spatial analysis correctly identifies rural market failure but the *scale* of the broadband equity problem is larger in suburban areas. Suburban broadband heterogeneity, some tracts well-served, some not, creates a mixed spatial signal that LISA misses. A threshold-based complement (all tracts below 65%, regardless of clustering) would capture these households.
+- **Urban affordability suppression is the cleanest argument for vouchers.** The 15 urban suppressed tracts have the right spatial signal (high-income neighbours, scattered low-broadband tracts), the right income pattern (income coefficient 3.5× larger), and the right EDI signal (urban median EDI = 0.409, well below LL's 0.838, affordability not deprivation). Infrastructure grants would be wasted here; the service exists, the subscriptions don't.
+
+### Why this pattern shows up in industry and in the world
+
+The guardrail failure, a targeting rule that is mechanistically correct but operationally incomplete, appears in many policy contexts. **Medicaid managed care** programmes that target by diagnostic code miss patients whose conditions are undiagnosed. **Education funding formulas** that target by test score miss students in under-resourced schools who score above the threshold. **Food assistance** programmes that use household income cutoffs miss households with temporarily high income and chronic food insecurity. In each case, the mechanism-based rule is right on average but wrong for a large subgroup. Checking coverage efficiency against a population benchmark, the guardrail analysis, is the evaluation discipline that separates good policy design from good-intentioned but incomplete analysis.
+
+---
+
+## Technical notes
+
+The synthetic data generator (`fetch.make_synthetic_geodataframe`) uses a 20×20 grid so all tracts share proper Queen contiguity borders, no isolated polygons that would produce zero-neighbour warnings. The shared latent "urban proximity" factor drives income, education, and broadband through the same channel, ensuring OLS controls genuinely explain variance rather than being decorative. Spatial autocorrelation is planted via iterative box-blur (not random noise), so LISA produces clean cold-spot clusters. The guardrail tension is planted by suppressing broadband in 15 low-income urban tracts, mimicking affordability barriers that spatial methods cannot detect. All tests in `tests/test_smoke.py` verify these structural properties hold.
