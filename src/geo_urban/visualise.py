@@ -37,7 +37,7 @@ def plot_lisa_static(gdf: gpd.GeoDataFrame, save_path: Path | None = None) -> pl
     gdf_wgs84.plot(color=colours, linewidth=0.1, edgecolor="white", ax=ax)
     patches = [mpatches.Patch(color=v, label=k) for k, v in CLUSTER_COLOURS.items()]
     ax.legend(handles=patches, loc="lower left", title="LISA Cluster", fontsize=9)
-    ax.set_title("LISA Broadband Clusters, California Census Tracts\n(LL cold spots = market-failure candidates for BEAD subsidy)", fontsize=13)
+    ax.set_title("LISA Broadband Clusters, Synthetic Grid\n(Queen adjacency; two-sided local tests; BY adjustment)", fontsize=13)
     ax.axis("off")
     plt.tight_layout()
     fig.text(0.5, -0.02, "Synthetic cells and population proxies; no measured policy effect.", ha="center", fontsize=9)
@@ -110,7 +110,7 @@ def plot_regression_comparison(comparison_df: pd.DataFrame, save_path: Path | No
     best_aic = df["AIC"].min()
     for i, (_, row) in enumerate(df.iterrows()):
         if pd.notna(row["AIC"]):
-            marker = " ✓" if row["AIC"] == best_aic else ""
+            marker = " (min)" if row["AIC"] == best_aic else ""
             axes[1].text(i, row["AIC"] + abs(best_aic) * 0.005, f"{row['AIC']:.0f}{marker}", ha="center", fontsize=9)
 
     plt.suptitle("Spatial Regression Model Comparison, Broadband Rate", fontsize=13, y=1.02)
@@ -183,7 +183,7 @@ def plot_subgroup_regression(
             va="center", fontsize=9,
         )
     axes[0].set_xlabel("OLS R²", fontsize=11)
-    axes[0].set_title("OLS Explanatory Power by Synthetic Area Type\n(lower urban R² = affordability factors income alone cannot explain)", fontsize=11)
+    axes[0].set_title("OLS Explanatory Power by Synthetic Area Type\n(in-sample fit, no causal interpretation)", fontsize=11)
     axes[0].set_xlim(0, 1)
 
     # Panel 2: log_income coefficient comparison (the main covariate)
@@ -203,9 +203,9 @@ def plot_subgroup_regression(
             )
         axes[1].axvline(0, color="grey", linewidth=0.8, linestyle="--")
         axes[1].set_xlabel("OLS Coefficient (log_income → broadband_rate)", fontsize=11)
-        axes[1].set_title("Income Effect on Broadband by Synthetic Area Type\n(income coefficient strongest in rural; urban has suppressed tracts income can't explain)", fontsize=11)
+        axes[1].set_title("Income Effect on Broadband by Synthetic Area Type\n(synthetic covariates, no causal interpretation)", fontsize=11)
 
-    plt.suptitle("Subgroup OLS: Rural Broadband Well-Explained by Income; Urban Has a Residual Gap", fontsize=13, y=1.02)
+    plt.suptitle("Subgroup OLS on Synthetic Area Types", fontsize=13, y=1.02)
     plt.tight_layout()
     fig.text(0.5, -0.02, "Synthetic cells and population proxies; no measured policy effect.", ha="center", fontsize=9)
     if save_path:
@@ -326,6 +326,8 @@ def plot_edi_by_cluster(
         y="economic_disadvantage_index",
         order=cluster_order,
         palette=palette,
+        hue="lisa_cluster",
+        legend=False,
         ax=ax,
         linewidth=1.2,
         fliersize=3,

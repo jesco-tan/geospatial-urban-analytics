@@ -108,7 +108,7 @@ code {{ font-size: .9em; }} @media print {{ body {{ padding: 0; }} figure, table
         destinations.append(ROOT / "report.html")
     for destination in destinations:
         destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_text(document, encoding="utf-8")
+        destination.write_text(document, encoding="utf-8", newline="\n")
         print(destination)
 
 

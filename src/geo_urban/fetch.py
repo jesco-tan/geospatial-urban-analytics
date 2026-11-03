@@ -246,6 +246,8 @@ def make_synthetic_geodataframe(n_tracts: int = 400, seed: int = 42) -> gpd.GeoD
     gdf = gpd.GeoDataFrame(
         {
             "GEOID": geoids,
+            "grid_row": row_arr,
+            "grid_col": col_arr,
             "geometry": geometries,
             "median_household_income": income,
             "broadband_rate": broadband_rate,

@@ -1,57 +1,50 @@
-# Synthetic broadband targeting: spatial analysis and an interactive explorer
+# Broadband targeting on a verified synthetic grid
 
-Evidence interpretation revised 3 November 2026. Results describe the saved synthetic demonstration, not real-world outcomes. Numerical inputs and model estimates were not refitted for this narrative revision.
+Executed 3 November 2026. Artificial cells, adoption values and generated population proxies, not measured California households or program eligibility.
 
-I built a spatial-analysis pipeline and interactive explorer to compare two targeting ideas: significant low-low clusters and all cells below a chosen adoption threshold. The published analysis uses 400 generated rectangles in an artificial 20 by 20 grid. They are not authentic Census tracts, and the counts are population proxies rather than observed California households.
+## Targeting denominator
 
-The saved results illustrate the mechanics of spatial association, regression and targeting coverage. They do not diagnose actual market failure, establish subsidy eligibility or estimate policy effects.
+All generated population in a cell contributes when adoption is below 65%. This is not a count of individual non-subscribers. The 258 below-threshold cells contain 521,152 proxy units. The primary queen analysis includes 85,741 (16.5%) and excludes 435,411 (83.5%). Outside-target units comprise 132,879 rural, 234,282 suburban and 68,250 urban units.
 
-## Explore the saved sample
+![Coverage by synthetic area type](outputs/guardrail_analysis.png)
 
-![Broadband Equity Landscape displaying synthetic cells and the outside-target population-proxy share](outputs/broadband-equity-landscape.webp)
+## Graph and inference
 
-Synthetic geography and population proxies. The final chapter shows the share of the defined underserved proxy outside the saved low-low target, not measured California households.
+Neighbours derive from integer row and column coordinates, independent of floating-point polygon boundaries. Queen adjacency is primary; rook is a predefined sensitivity. Both graphs have one component, no islands, symmetric adjacency and exact row/ID alignment. Queen corner/edge/interior degrees are 3/5/8, with mean 7.41; rook degrees are 2/3/4, with mean 3.8. Row-standardised weights need not themselves be symmetric.
 
-[Open Broadband Equity Landscape](https://jesco-tan.github.io/broadband-equity-landscape/) for a four-chapter walkthrough, 3D and flat views, cell inspection and targeting comparisons. The searchable HTML list and table fallback retain access without WebGL.
+Synthetic generation and permutation seed: 42. Each spatial statistic uses 9,999 permutations. Local pseudo p-values are doubled from ESDA's directed folded tail, capped at one, then adjusted using Benjamini-Yekutieli across the full 400-cell family. This conservative choice avoids assuming independence or positive dependence. Raw and adjusted labels are both exported. Pseudo p-values remain Monte Carlo approximations; selection near the cutoff can vary with another seed.
 
-The explorer preserves all 400 records from a pinned analytical run, including full-precision local p-values and final classifications. It does not rerun spatial statistics. Its [source audit](https://github.com/jesco-tan/broadband-equity-landscape/blob/af1f1f96f94586fe4d5e584c481e5e9f7a4a2696/docs/source-audit.md) and [data validation record](https://github.com/jesco-tan/broadband-equity-landscape/blob/af1f1f96f94586fe4d5e584c481e5e9f7a4a2696/docs/data-validation.md) explain the fixture and proxy mapping.
+The historical fragmented graph and unadjusted results are superseded; their bytes remain in Git history. Graph repair and inference changes both contribute to the new results.
 
-## Constructed geography and association
+| Analysis | Moran I | LL cells | Covered proxy | Coverage |
+| --- | --- | --- | --- | --- |
+| Queen, BY adjusted (primary) | 0.908807 | 90 | 85,741 | 16.5% |
+| Rook, BY adjusted (sensitivity) | 0.919053 | 19 | 13,177 | 2.5% |
+| Queen, unadjusted two-sided | 0.908807 | 116 | 122,601 | 23.5% |
+| Rook, unadjusted two-sided | 0.919053 | 96 | 91,715 | 17.6% |
 
-Four synthetic centres drive a latent proximity field. That field influences generated income, education, population and adoption. Spatial smoothing deliberately creates association; 15 urban-labelled cells have adoption suppressed. Rural, suburban and urban are generated categories, not official Census classifications.
+Global two-sided permutation pseudo p is 0.0002 for both adjacencies. Primary local counts: 90 LL, 60 HH, four LH and 246 NS. All selected LL cells are rural-labelled. The broad targeting distinction persists, but the selected set is highly sensitive to adjacency and multiplicity.
 
-![Saved Moran scatter for generated adoption values under the preserved spatial weights](outputs/moran_scatter.png)
+![Adjusted local clusters](outputs/lisa_cluster_map.png)
 
-Synthetic scenario. Saved Global Moran I = 0.913804 and permutation pseudo p = 0.001 with 999 permutations. This describes constructed spatial association under the saved graph, not nearly perfect prediction or causal influence between actual places.
+![Moran scatter](outputs/moran_scatter.png)
 
-The contiguity audit found an important limit: the saved weights graph has 45 disconnected components and mean degree 4.25. Exact shared-vertex arithmetic on the exported polygons reproduces that graph and statistic. Floating-point construction of nominally shared borders appears to fragment the intended connected grid. A repaired grid would require a separately versioned analytical run; the explorer faithfully retains the historical one.
+## Fitted models
 
-## Local patterns and fitted models
+OLS HC3 R2 is 0.7549, AIC -591.9. Primary Spatial Lag pseudo R2 is 0.9334, AIC -1049.36, rho 0.834741. Spatial Error pseudo R2 is 0.581, AIC -998.22. These are in-sample descriptors with different R2 definitions, not intervention effects or validated forecasts.
 
-The saved local labels contain 113 LL cells, 92 HH cells, four LH cells and 191 nonsignificant cells. All LL cells have the rural label. Local tests use uncorrected pseudo p below 0.05, and their random seed was not recorded, so preserving the saved classifications is distinct from guaranteeing them in a new run.
+![Model comparison](outputs/regression_comparison.png)
 
-![Preserved local spatial labels on the synthetic grid](outputs/lisa_cluster_map.png)
+Subgroup graphs are induced subsets and can be disconnected, including an island in the rural subset. Their statistics in the JSON are exploratory, distinct from the verified connected full grid. The disadvantage index overlaps the generated drivers and is not independent corroboration.
 
-Synthetic scenario under the historical graph. Blue marks 113 significant low-low cells and red marks 92 high-high cells. These labels identify relative spatial patterns; they do not establish service availability, household need or grant eligibility.
+## Reproduction and provenance
 
-The project implements OLS with HC3 standard errors, Spatial Lag and Spatial Error models and subgroup summaries. Saved OLS R2 is 0.7549; Spatial Lag pseudo R2 is 0.9106, with AIC -922.24 versus OLS -591.90. These are in-sample fit descriptors. The spatial pseudo R2 is not the same metric as OLS explained-variance R2.
+Run `.venv/Scripts/python.exe scripts/run_analysis.py` after installing `requirements.txt` in a Python 3.14 virtual environment. Run `.venv/Scripts/python.exe -m pytest tests -q -p no:cacheprovider`. `outputs/manifest.json` records source hashes, package versions, seed, parameters and output hashes. Counts and labels should match exactly in the pinned environment; model coefficients allow absolute tolerance 1e-6. Folium element IDs and timing metadata need not be byte-identical.
 
-Rho 0.677804 describes fitted dependence. It does not identify how a subsidy changes neighbouring adoption. The generated disadvantage index is also not independent confirmation: it includes a broadband component calculated before the urban suppression step.
+`outputs/cells.geojson` is the complete fixture source. The companion exporter validates manifest hashes before producing `broadband-synthetic.v2.json`. Version 1 is historical and is no longer loaded by the explorer. Source commit identifies the starting revision at the beginning of the analytical run.
 
-## What the 77.1% measures
+Methods: [PySAL lattice conventions](https://pysal.org/libpysal/v4.14.1/generated/libpysal.weights.lat2W.html), [statsmodels multiple testing](https://www.statsmodels.org/dev/_modules/statsmodels/stats/multitest.html).
 
-A cell contributes its entire generated population to the underserved proxy when its adoption value is below 65%. Otherwise it contributes zero. This is not a calculation of population multiplied by the non-adoption rate and does not count individual non-subscribers.
+## Boundaries
 
-Among the 258 cells below that threshold, the total proxy is 521,152 units. LL targeting includes 119,165, or 22.9%, leaving 401,987, or 77.1%, outside. The outside-target total includes 99,455 rural, 234,282 suburban and 68,250 urban proxy units.
-
-![Historical targeting-coverage calculation on synthetic population proxies](outputs/guardrail_analysis.png)
-
-Synthetic scenario. LL targeting includes 119,165 of 218,620 rural underserved proxy units, or 54.5%, and none of the 234,282 suburban or 68,250 urban units. Overall coverage is 22.9% of 521,152. The figure labels these generated population proxies explicitly.
-
-This calculation shows that relative clustering and a fixed adoption threshold select different populations in this scenario. It does not show which infrastructure grants, vouchers or other interventions would work. The 65% setting is a scenario threshold, not a verified public-program eligibility rule.
-
-## What this project demonstrates
-
-The contribution is the implemented spatial workflow, explicit targeting denominator and interactive preservation of an auditable result set. The graph limitation, local-test multiplicity and constructed mechanisms remain material to interpretation.
-
-An empirical extension would require authentic boundaries, observed household denominators, consistent data vintages, uncertainty handling, validated spatial weights and an intervention-evaluation design. A topology-corrected synthetic run should be published separately from this pinned historical fixture, with its neighbour graph and random seeds recorded.
+The constructed mechanism intentionally creates spatial association and suppresses adoption in 15 urban cells. No causal policy effect, observed household estimate or actual subsidy eligibility follows. Authentic boundaries, observed denominators and an intervention evaluation remain necessary for empirical policy work. The hosted explorer updates through its existing publication workflow; deployment status must be verified separately.

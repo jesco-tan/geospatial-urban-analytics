@@ -34,9 +34,10 @@ def choropleth_map(
 ) -> folium.Map:
     """Build a Folium choropleth for a single numeric column."""
     gdf_wgs84 = gdf.to_crs(epsg=4326)
-    centre = [gdf_wgs84.geometry.centroid.y.mean(), gdf_wgs84.geometry.centroid.x.mean()]
+    bounds = gdf_wgs84.total_bounds
+    centre = [(bounds[1]+bounds[3])/2, (bounds[0]+bounds[2])/2]
 
-    m = folium.Map(location=centre, zoom_start=7, tiles="CartoDB positron")
+    m = folium.Map(location=centre, zoom_start=7, tiles=None)
 
     tooltip_cols = ["GEOID", column]
     extra_candidates = [
@@ -87,9 +88,10 @@ def lisa_map(
 ) -> folium.Map:
     """Colour tracts by LISA cluster type (HH/LL/HL/LH/NS)."""
     gdf_wgs84 = gdf.to_crs(epsg=4326).copy()
-    centre = [gdf_wgs84.geometry.centroid.y.mean(), gdf_wgs84.geometry.centroid.x.mean()]
+    bounds = gdf_wgs84.total_bounds
+    centre = [(bounds[1]+bounds[3])/2, (bounds[0]+bounds[2])/2]
 
-    m = folium.Map(location=centre, zoom_start=7, tiles="CartoDB positron")
+    m = folium.Map(location=centre, zoom_start=7, tiles=None)
     geojson_data = json.loads(gdf_wgs84.to_json())
 
     def style_fn(feature):
@@ -141,9 +143,10 @@ def county_type_map(
 ) -> folium.Map:
     """Colour tracts by county_type (urban / suburban / rural)."""
     gdf_wgs84 = gdf.to_crs(epsg=4326).copy()
-    centre = [gdf_wgs84.geometry.centroid.y.mean(), gdf_wgs84.geometry.centroid.x.mean()]
+    bounds = gdf_wgs84.total_bounds
+    centre = [(bounds[1]+bounds[3])/2, (bounds[0]+bounds[2])/2]
 
-    m = folium.Map(location=centre, zoom_start=7, tiles="CartoDB positron")
+    m = folium.Map(location=centre, zoom_start=7, tiles=None)
     geojson_data = json.loads(gdf_wgs84.to_json())
 
     def style_fn(feature):

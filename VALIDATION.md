@@ -1,9 +1,9 @@
-# Verification, 3 November 2026
+# Validation
 
-Python and notebook syntax passed. Existing 400-cell records reconcile underserved proxy 521,152, inside-LL 119,165 and outside-LL 401,987. The coverage figure was redrawn from those saved records with explicit proxy labels. HTML map legends no longer imply market failure. No spatial statistics, permutations or regressions were rerun. Changed notebook cells have cleared execution state.
+I checked the corrected synthetic grid against an independently constructed PySAL lattice. Both queen and rook adjacency have one connected component, no islands, symmetric neighbour membership and cell IDs aligned with the data rows. All 16 Python tests passed.
 
-## Interpretation limits
+I reran the spatial analysis with recorded seeds, two-sided local tests and Benjamini-Yekutieli adjustment. The summary and complete GeoJSON reproduced byte for byte before final figure-caption and whitespace changes. The current maps, targeting totals and explorer export are recorded in `outputs/run_summary.json` and `outputs/manifest.json`.
 
-The current results are synthetic demonstrations. Passing software checks does not validate real-world predictive performance, causality or business benefit.
+## Scope
 
-The saved graph has 45 disconnected components and mean degree 4.25; local tests are uncorrected and their random seed was not recorded. The current fixture retains the saved graph results and does not claim a repaired connected lattice.
+These are generated cells and population proxies. The results do not establish measured household need, causal effects or subsidy eligibility. The queen/rook sensitivity is part of the result, and subgroup graphs can remain disconnected. See [REPORT.md](REPORT.md) for methods, interpretation and reproduction.
