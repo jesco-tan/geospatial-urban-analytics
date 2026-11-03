@@ -7,7 +7,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import seaborn as sns
-import geopandas as gpd
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    import geopandas as gpd
 from pathlib import Path
 
 sns.set_theme(style="whitegrid", font_scale=1.05)
@@ -38,6 +40,7 @@ def plot_lisa_static(gdf: gpd.GeoDataFrame, save_path: Path | None = None) -> pl
     ax.set_title("LISA Broadband Clusters, California Census Tracts\n(LL cold spots = market-failure candidates for BEAD subsidy)", fontsize=13)
     ax.axis("off")
     plt.tight_layout()
+    fig.text(0.5, -0.02, "Synthetic cells and population proxies; no measured policy effect.", ha="center", fontsize=9)
     if save_path:
         fig.savefig(save_path, dpi=150, bbox_inches="tight")
     return fig
@@ -82,6 +85,7 @@ def plot_moran_scatter(
         ax.legend(handles=patches, fontsize=8, title="LISA", loc="upper left")
 
     plt.tight_layout()
+    fig.text(0.5, -0.02, "Synthetic cells and population proxies; no measured policy effect.", ha="center", fontsize=9)
     if save_path:
         fig.savefig(save_path, dpi=150, bbox_inches="tight")
     return fig
@@ -111,6 +115,7 @@ def plot_regression_comparison(comparison_df: pd.DataFrame, save_path: Path | No
 
     plt.suptitle("Spatial Regression Model Comparison, Broadband Rate", fontsize=13, y=1.02)
     plt.tight_layout()
+    fig.text(0.5, -0.02, "Synthetic cells and population proxies; no measured policy effect.", ha="center", fontsize=9)
     if save_path:
         fig.savefig(save_path, dpi=150, bbox_inches="tight")
     return fig
@@ -138,13 +143,14 @@ def plot_broadband_distribution(
     ax.set_xlabel("Broadband Adoption Rate", fontsize=11)
     ax.set_ylabel("Density", fontsize=11)
     ax.set_title(
-        "Broadband Rate Distribution by County Type\n"
+        "Broadband Rate Distribution by Synthetic Area Type\n"
         "Rural and suburban tracts have heavier left tails, but urban poor tracts are scattered",
         fontsize=12,
     )
     ax.legend(fontsize=10)
     ax.set_xlim(0, 1)
     plt.tight_layout()
+    fig.text(0.5, -0.02, "Synthetic cells and population proxies; no measured policy effect.", ha="center", fontsize=9)
     if save_path:
         fig.savefig(save_path, dpi=150, bbox_inches="tight")
     return fig
@@ -177,7 +183,7 @@ def plot_subgroup_regression(
             va="center", fontsize=9,
         )
     axes[0].set_xlabel("OLS R²", fontsize=11)
-    axes[0].set_title("OLS Explanatory Power by County Type\n(lower urban R² = affordability factors income alone cannot explain)", fontsize=11)
+    axes[0].set_title("OLS Explanatory Power by Synthetic Area Type\n(lower urban R² = affordability factors income alone cannot explain)", fontsize=11)
     axes[0].set_xlim(0, 1)
 
     # Panel 2: log_income coefficient comparison (the main covariate)
@@ -197,10 +203,11 @@ def plot_subgroup_regression(
             )
         axes[1].axvline(0, color="grey", linewidth=0.8, linestyle="--")
         axes[1].set_xlabel("OLS Coefficient (log_income → broadband_rate)", fontsize=11)
-        axes[1].set_title("Income Effect on Broadband by County Type\n(income coefficient strongest in rural; urban has suppressed tracts income can't explain)", fontsize=11)
+        axes[1].set_title("Income Effect on Broadband by Synthetic Area Type\n(income coefficient strongest in rural; urban has suppressed tracts income can't explain)", fontsize=11)
 
     plt.suptitle("Subgroup OLS: Rural Broadband Well-Explained by Income; Urban Has a Residual Gap", fontsize=13, y=1.02)
     plt.tight_layout()
+    fig.text(0.5, -0.02, "Synthetic cells and population proxies; no measured policy effect.", ha="center", fontsize=9)
     if save_path:
         fig.savefig(save_path, dpi=150, bbox_inches="tight")
     return fig
@@ -245,9 +252,9 @@ def plot_guardrail(
             )
 
     axes[0].set_xlabel("Broadband Rate", fontsize=11)
-    axes[0].set_ylabel("Tract Population", fontsize=11)
+    axes[0].set_ylabel("Generated population proxy", fontsize=11)
     axes[0].set_title(
-        f"Underserved Tracts (broadband < {broadband_threshold:.0%})\n"
+        f"Below-threshold synthetic cells (broadband < {broadband_threshold:.0%})\n"
         "Diamonds = LL cold-spot clusters; Circles = scattered underserved",
         fontsize=11,
     )
@@ -278,20 +285,21 @@ def plot_guardrail(
 
         axes[1].set_xticks(x)
         axes[1].set_xticklabels([g.capitalize() for g in groups])
-        axes[1].set_ylabel("Underserved Households", fontsize=11)
+        axes[1].set_ylabel("Underserved population proxy", fontsize=11)
         axes[1].set_title(
-            "Guardrail: LL-Cluster Targeting Coverage by County Type\n"
-            "Urban underserved households are largely missed by spatial targeting alone",
+            "Guardrail: LL-Cluster Targeting Coverage by Synthetic Area Type\n"
+            "Includes all population proxy units in cells below 65% adoption",
             fontsize=11,
         )
         axes[1].legend(fontsize=9)
 
     missed_pct = coverage_result.get("missed_pct", 0)
     plt.suptitle(
-        f"Analytical Tension: Spatial Targeting Misses {missed_pct:.0f}% of Underserved Households",
+        f"Synthetic LL targeting excludes {missed_pct:.0f}% of Underserved population proxy",
         fontsize=13, y=1.02,
     )
     plt.tight_layout()
+    fig.text(0.5, -0.02, "Synthetic cells and population proxies; no measured policy effect.", ha="center", fontsize=9)
     if save_path:
         fig.savefig(save_path, dpi=150, bbox_inches="tight")
     return fig
@@ -327,10 +335,11 @@ def plot_edi_by_cluster(
     ax.set_ylabel("Economic Disadvantage Index (0 = least, 1 = most)", fontsize=11)
     ax.set_title(
         "Secondary Outcome: Economic Disadvantage by LISA Cluster\n"
-        "LL cold spots have the highest multi-dimensional deprivation (income + education + broadband)",
+        "Generated index overlaps income, education and pre-suppression broadband",
         fontsize=12,
     )
     plt.tight_layout()
+    fig.text(0.5, -0.02, "Synthetic cells and population proxies; no measured policy effect.", ha="center", fontsize=9)
     if save_path:
         fig.savefig(save_path, dpi=150, bbox_inches="tight")
     return fig

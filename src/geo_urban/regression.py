@@ -168,7 +168,7 @@ def population_coverage_analysis(
       B) All tracts below broadband_threshold (needs-based)
 
     Returns metrics quantifying the guardrail tension: LL targeting misses
-    underserved households in non-clustering urban tracts.
+    generated population proxies outside the saved LL labels. No actual household counts or intervention effects are estimated.
     """
     underserved = gdf[gdf["broadband_rate"] < broadband_threshold].copy()
     total_underserved_hh = int(underserved[population_col].sum())

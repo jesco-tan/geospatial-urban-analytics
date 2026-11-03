@@ -123,7 +123,7 @@ def lisa_map(
                 padding:12px;border:1px solid #aaa;font-size:12px;border-radius:4px">
       <b>LISA Clusters, Broadband Rate</b><br>
       <span style="background:#d7191c;padding:2px 10px">&nbsp;</span> HH &ndash; Hot spot (high broadband cluster)<br>
-      <span style="background:#2c7bb6;padding:2px 10px">&nbsp;</span> LL &ndash; Cold spot (market failure candidate)<br>
+      <span style="background:#2c7bb6;padding:2px 10px">&nbsp;</span> LL &ndash; Relative low-low pattern, not eligibility<br>
       <span style="background:#fdae61;padding:2px 10px">&nbsp;</span> HL &ndash; Outlier (high tract, low neighbours)<br>
       <span style="background:#abd9e9;padding:2px 10px">&nbsp;</span> LH &ndash; Outlier (low tract, high neighbours)<br>
       <span style="background:#eeeeee;padding:2px 10px">&nbsp;</span> NS &ndash; Not significant
@@ -173,8 +173,8 @@ def county_type_map(
                 padding:12px;border:1px solid #aaa;font-size:12px;border-radius:4px">
       <b>County Type</b><br>
       <span style="background:#5e3c99;padding:2px 10px">&nbsp;</span> Urban (income-driven broadband gap)<br>
-      <span style="background:#b2abd2;padding:2px 10px">&nbsp;</span> Suburban (mixed drivers)<br>
-      <span style="background:#fdb863;padding:2px 10px">&nbsp;</span> Rural (spatial market failure)
+      <span style="background:#b2abd2;padding:2px 10px">&nbsp;</span> Synthetic suburban (generated drivers)<br>
+      <span style="background:#fdb863;padding:2px 10px">&nbsp;</span> Synthetic rural category
     </div>"""
     m.get_root().html.add_child(folium.Element(legend_html))
 
